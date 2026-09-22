@@ -149,7 +149,9 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppConstants.emergencyColor.withValues(alpha: 0.18),
+                      color: AppConstants.emergencyColor.withValues(
+                        alpha: 0.18,
+                      ),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -174,9 +176,15 @@ class HomeScreen extends StatelessWidget {
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              AppConstants.primaryDark.withValues(alpha: 0.96),
-                              AppConstants.primaryDark.withValues(alpha: 0.82),
-                              AppConstants.primaryDark.withValues(alpha: 0.20),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.96,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.82,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.20,
+                              ),
                               Colors.transparent,
                             ],
                             stops: const [
@@ -231,9 +239,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           const Text(
                             'Get Help',
                             style: TextStyle(
@@ -243,7 +249,6 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const Text(
                             'Now!',
                             style: TextStyle(
@@ -253,9 +258,7 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const SizedBox(height: 8),
-
                           const Text(
                             'Ambulance • Hospitals\nBlood • Emergency Support',
                             style: TextStyle(
@@ -268,7 +271,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Call button
+                    // SOS button
                     Positioned(
                       left: 14,
                       right: 14,
@@ -297,11 +300,14 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppConstants.emergencyColor,
+                            backgroundColor:
+                            AppConstants.emergencyColor,
                             foregroundColor: Colors.white,
                             elevation: 4,
                             shadowColor:
-                            AppConstants.emergencyColor.withValues(alpha: 0.4),
+                            AppConstants.emergencyColor.withValues(
+                              alpha: 0.4,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -450,7 +456,9 @@ class HomeScreen extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              AppConstants.textDark.withValues(alpha: 0.85),
+                              AppConstants.textDark.withValues(
+                                alpha: 0.85,
+                              ),
                             ],
                           ),
                         ),
@@ -532,33 +540,131 @@ class HomeScreen extends StatelessWidget {
       ),
 
       // Bottom Navigation
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedIndex: 0,
-        onDestinationSelected: (_) {},
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: AppConstants.primaryColor,
+            borderRadius: BorderRadius.circular(36),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.16),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map_rounded),
-            label: 'Map',
+          child: Row(
+            children: [
+              // Home
+              Expanded(
+                child: _BottomNavItem(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home_rounded,
+                  label: 'Home',
+                  selected: true,
+                  onTap: () {},
+                ),
+              ),
+
+              // Services
+              Expanded(
+                child: _BottomNavItem(
+                  icon: Icons.grid_view_rounded,
+                  selectedIcon: Icons.grid_view_rounded,
+                  label: 'Services',
+                  selected: false,
+                  onTap: () {},
+                ),
+              ),
+
+              // History
+              Expanded(
+                child: _BottomNavItem(
+                  icon: Icons.bar_chart_outlined,
+                  selectedIcon: Icons.bar_chart_rounded,
+                  label: 'History',
+                  selected: false,
+                  onTap: () {},
+                ),
+              ),
+
+              // Profile
+              Expanded(
+                child: _BottomNavItem(
+                  icon: Icons.person_outline_rounded,
+                  selectedIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  selected: false,
+                  onTap: () {},
+                ),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history_rounded),
-            label: 'History',
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            width: 56,
+            height: 52,
+            decoration: BoxDecoration(
+              color: selected ? Colors.white : Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  selected ? selectedIcon : icon,
+                  size: 23,
+                  color: selected
+                      ? AppConstants.orangeColor
+                      : Colors.white.withValues(alpha: 0.78),
+                ),
+                const SizedBox(height: 2),
+                if (selected)
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: AppConstants.textDark,
+                    ),
+                  ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }
