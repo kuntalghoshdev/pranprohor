@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
 import '../ambulance/sos_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -70,7 +71,13 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
                       icon: const Icon(
                         Icons.notifications_none_rounded,
                         color: AppConstants.textDark,
