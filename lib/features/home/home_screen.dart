@@ -65,24 +65,49 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const NotificationsScreen(),
+
+                  // Notification button with unread badge
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                const NotificationsScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppConstants.textDark,
                           ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: AppConstants.textDark,
+                        ),
                       ),
-                    ),
+
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: AppConstants.emergencyColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -246,9 +271,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           const Text(
                             'Get Help',
                             style: TextStyle(
@@ -258,7 +281,6 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const Text(
                             'Now!',
                             style: TextStyle(
@@ -268,9 +290,7 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const SizedBox(height: 8),
-
                           const Text(
                             'Ambulance • Hospitals\nBlood • Emergency Support',
                             style: TextStyle(
