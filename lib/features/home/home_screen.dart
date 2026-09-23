@@ -149,7 +149,9 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppConstants.emergencyColor.withValues(alpha: 0.18),
+                      color: AppConstants.emergencyColor.withValues(
+                        alpha: 0.18,
+                      ),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -174,9 +176,15 @@ class HomeScreen extends StatelessWidget {
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              AppConstants.primaryDark.withValues(alpha: 0.96),
-                              AppConstants.primaryDark.withValues(alpha: 0.82),
-                              AppConstants.primaryDark.withValues(alpha: 0.20),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.96,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.82,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.20,
+                              ),
                               Colors.transparent,
                             ],
                             stops: const [
@@ -268,7 +276,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Call button
+                    // SOS button
                     Positioned(
                       left: 14,
                       right: 14,
@@ -297,11 +305,14 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppConstants.emergencyColor,
+                            backgroundColor:
+                            AppConstants.emergencyColor,
                             foregroundColor: Colors.white,
                             elevation: 4,
                             shadowColor:
-                            AppConstants.emergencyColor.withValues(alpha: 0.4),
+                            AppConstants.emergencyColor.withValues(
+                              alpha: 0.4,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -450,7 +461,9 @@ class HomeScreen extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              AppConstants.textDark.withValues(alpha: 0.85),
+                              AppConstants.textDark.withValues(
+                                alpha: 0.85,
+                              ),
                             ],
                           ),
                         ),
@@ -509,7 +522,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.favorite_rounded,
-                      color: AppConstants.primaryColor,
+                      color: AppConstants.orangeColor,
                       size: 30,
                     ),
                     SizedBox(width: 12),
@@ -529,36 +542,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-
-      // Bottom Navigation
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedIndex: 0,
-        onDestinationSelected: (_) {},
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map_rounded),
-            label: 'Map',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history_rounded),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }
