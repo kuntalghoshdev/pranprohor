@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
+import 'auth_gate.dart';
 import 'auth_service.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -59,7 +60,19 @@ class _OtpScreenState extends State<OtpScreen> {
         _isLoading = false;
       });
 
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      // Restart the authentication routing flow.
+      //
+      // AuthGate will detect the Firebase-authenticated user
+      // and then decide whether the user should go to:
+      //
+      // New user  -> Profile Setup
+      // Existing user -> Location -> Home
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const AuthGate(),
+        ),
+            (route) => false,
+      );
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
 
@@ -81,10 +94,13 @@ class _OtpScreenState extends State<OtpScreen> {
     switch (error.code) {
       case 'invalid-verification-code':
         return 'The verification code is incorrect.';
+
       case 'session-expired':
         return 'The verification session expired. Please request a new OTP.';
+
       case 'network-request-failed':
         return 'Please check your internet connection.';
+
       default:
         return error.message ?? 'OTP verification failed.';
     }
