@@ -27,6 +27,8 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>PranProhor uses your location to provide nearby healthcare and emergency assistance.</string>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>

@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
+import '../location/location_gate.dart';
+import 'profile_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -17,6 +20,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   String? _selectedGender;
   String? _selectedBloodGroup;
+
+  bool _isSaving = false;
 
   final List<String> _genderOptions = [
     'Male',
@@ -43,17 +48,67 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile details ready to be saved.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final age = int.parse(_ageController.text.trim());
+
+      await ProfileService.saveProfile(
+        uid: user.uid,
+        name: _nameController.text.trim(),
+        age: age,
+        gender: _selectedGender,
+        bloodGroup: _selectedBloodGroup,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const LocationGate(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to save profile. Please try again.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -287,7 +342,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       child: Text(gender),
                     );
                   }).toList(),
-                  onChanged: (value) {
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
                     setState(() {
                       _selectedGender = value;
                     });
@@ -320,7 +377,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       child: Text(bloodGroup),
                     );
                   }).toList(),
-                  onChanged: (value) {
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
                     setState(() {
                       _selectedBloodGroup = value;
                     });
@@ -372,14 +431,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton.icon(
-                    onPressed: _continue,
-                    icon: const Icon(
+                    onPressed: _isSaving ? null : _continue,
+                    icon: _isSaving
+                        ? const SizedBox(
+                      width: 21,
+                      height: 21,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: Colors.white,
+                      ),
+                    )
+                        : const Icon(
                       Icons.arrow_forward_rounded,
                       size: 21,
                     ),
-                    label: const Text(
-                      'Continue',
-                      style: TextStyle(
+                    label: Text(
+                      _isSaving ? 'Saving...' : 'Continue',
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),

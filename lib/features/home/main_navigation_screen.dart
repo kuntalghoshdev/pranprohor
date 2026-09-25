@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_constants.dart';
 import '../history/history_screen.dart';
@@ -7,7 +8,12 @@ import '../services/services_screen.dart';
 import 'home_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final Position? position;
+
+  const MainNavigationScreen({
+    super.key,
+    this.position,
+  });
 
   @override
   State<MainNavigationScreen> createState() =>
@@ -20,7 +26,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const HomeScreen(),
+      HomeScreen(
+        position: widget.position,
+      ),
       const ServicesScreen(),
       HistoryScreen(
         onExploreServices: () {

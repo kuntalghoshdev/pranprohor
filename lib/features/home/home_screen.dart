@@ -1,11 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_constants.dart';
 import '../ambulance/sos_screen.dart';
 import '../notifications/notifications_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final Position? position;
+
+  const HomeScreen({
+    super.key,
+    this.position,
+  });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _placeName = 'Detecting your location...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getPlaceName();
+  }
+
+  Future<void> _getPlaceName() async {
+    final position = widget.position;
+
+    if (position == null) {
+      return;
+    }
+
+    try {
+      final geocoding = Geocoding();
+
+      final placemarks = await geocoding.placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (!mounted || placemarks.isEmpty) {
+        return;
+      }
+
+      final place = placemarks.first;
+
+      final parts = <String>[
+        if (place.subLocality != null &&
+            place.subLocality!.trim().isNotEmpty)
+          place.subLocality!.trim(),
+        if (place.locality != null &&
+            place.locality!.trim().isNotEmpty)
+          place.locality!.trim(),
+      ];
+
+      if (parts.isNotEmpty) {
+        setState(() {
+          _placeName = parts.join(', ');
+        });
+      } else if (place.administrativeArea != null &&
+          place.administrativeArea!.trim().isNotEmpty) {
+        setState(() {
+          _placeName = place.administrativeArea!.trim();
+        });
+      }
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _placeName = 'Unable to detect location';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +161,6 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       Positioned(
                         top: 6,
                         right: 6,
@@ -139,21 +209,21 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Your Location',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppConstants.textLight,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Detecting your location...',
-                            style: TextStyle(
+                            _placeName,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: AppConstants.textDark,
@@ -191,7 +261,6 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Full background image
                     Positioned.fill(
                       child: Image.asset(
                         'assets/images/home/emergency_banner.png',
@@ -199,8 +268,6 @@ class HomeScreen extends StatelessWidget {
                         alignment: Alignment.center,
                       ),
                     ),
-
-                    // Dark gradient for readable text
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -229,8 +296,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // Red emergency accent
                     Positioned(
                       top: 0,
                       left: 0,
@@ -242,8 +307,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // Content
                     Positioned(
                       top: 18,
                       left: 18,
@@ -302,8 +365,6 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // SOS button
                     Positioned(
                       left: 14,
                       right: 14,
