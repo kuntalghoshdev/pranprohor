@@ -1,10 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_constants.dart';
 import '../ambulance/sos_screen.dart';
+import '../notifications/notifications_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final Position? position;
+
+  const HomeScreen({
+    super.key,
+    this.position,
+  });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _placeName = 'Detecting your location...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getPlaceName();
+  }
+
+  Future<void> _getPlaceName() async {
+    final position = widget.position;
+
+    if (position == null) {
+      return;
+    }
+
+    try {
+      final geocoding = Geocoding();
+
+      final placemarks = await geocoding.placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (!mounted || placemarks.isEmpty) {
+        return;
+      }
+
+      final place = placemarks.first;
+
+      final parts = <String>[
+        if (place.subLocality != null &&
+            place.subLocality!.trim().isNotEmpty)
+          place.subLocality!.trim(),
+        if (place.locality != null &&
+            place.locality!.trim().isNotEmpty)
+          place.locality!.trim(),
+      ];
+
+      if (parts.isNotEmpty) {
+        setState(() {
+          _placeName = parts.join(', ');
+        });
+      } else if (place.administrativeArea != null &&
+          place.administrativeArea!.trim().isNotEmpty) {
+        setState(() {
+          _placeName = place.administrativeArea!.trim();
+        });
+      }
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _placeName = 'Unable to detect location';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,18 +136,48 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: AppConstants.textDark,
+
+                  // Notification button with unread badge
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                const NotificationsScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppConstants.textDark,
+                          ),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: AppConstants.emergencyColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -107,21 +209,21 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Your Location',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppConstants.textLight,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Detecting your location...',
-                            style: TextStyle(
+                            _placeName,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: AppConstants.textDark,
@@ -149,7 +251,9 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppConstants.emergencyColor.withValues(alpha: 0.18),
+                      color: AppConstants.emergencyColor.withValues(
+                        alpha: 0.18,
+                      ),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -157,7 +261,6 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Full background image
                     Positioned.fill(
                       child: Image.asset(
                         'assets/images/home/emergency_banner.png',
@@ -165,8 +268,6 @@ class HomeScreen extends StatelessWidget {
                         alignment: Alignment.center,
                       ),
                     ),
-
-                    // Dark gradient for readable text
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -174,9 +275,15 @@ class HomeScreen extends StatelessWidget {
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              AppConstants.primaryDark.withValues(alpha: 0.96),
-                              AppConstants.primaryDark.withValues(alpha: 0.82),
-                              AppConstants.primaryDark.withValues(alpha: 0.20),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.96,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.82,
+                              ),
+                              AppConstants.primaryDark.withValues(
+                                alpha: 0.20,
+                              ),
                               Colors.transparent,
                             ],
                             stops: const [
@@ -189,8 +296,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // Red emergency accent
                     Positioned(
                       top: 0,
                       left: 0,
@@ -202,8 +307,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // Content
                     Positioned(
                       top: 18,
                       left: 18,
@@ -231,9 +334,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           const Text(
                             'Get Help',
                             style: TextStyle(
@@ -243,7 +344,6 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const Text(
                             'Now!',
                             style: TextStyle(
@@ -253,9 +353,7 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const SizedBox(height: 8),
-
                           const Text(
                             'Ambulance • Hospitals\nBlood • Emergency Support',
                             style: TextStyle(
@@ -267,8 +365,6 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // Call button
                     Positioned(
                       left: 14,
                       right: 14,
@@ -297,11 +393,14 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppConstants.emergencyColor,
+                            backgroundColor:
+                            AppConstants.emergencyColor,
                             foregroundColor: Colors.white,
                             elevation: 4,
                             shadowColor:
-                            AppConstants.emergencyColor.withValues(alpha: 0.4),
+                            AppConstants.emergencyColor.withValues(
+                              alpha: 0.4,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -450,7 +549,9 @@ class HomeScreen extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              AppConstants.textDark.withValues(alpha: 0.85),
+                              AppConstants.textDark.withValues(
+                                alpha: 0.85,
+                              ),
                             ],
                           ),
                         ),
@@ -509,7 +610,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.favorite_rounded,
-                      color: AppConstants.primaryColor,
+                      color: AppConstants.orangeColor,
                       size: 30,
                     ),
                     SizedBox(width: 12),
@@ -529,36 +630,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-
-      // Bottom Navigation
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedIndex: 0,
-        onDestinationSelected: (_) {},
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map_rounded),
-            label: 'Map',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history_rounded),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }

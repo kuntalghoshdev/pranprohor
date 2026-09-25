@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "851873073063",
+    "project_id": "pranprohor-app",
+    "storage_bucket": "pranprohor-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851873073063:android:b2231932ab5037f3a09882",
+        "android_client_info": {
+          "package_name": "com.pranprohor.pranprohor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcB-FwM2CtQLw9AJQk3KHmAjZtw9dzZfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
