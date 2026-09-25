@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  bool _hasUnreadNotifications = true;
+
+  void _markAllRead() {
+    setState(() {
+      _hasUnreadNotifications = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +69,13 @@ class NotificationsScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Mark all read',
+                    onPressed: _hasUnreadNotifications ? _markAllRead : null,
+                    child: Text(
+                      _hasUnreadNotifications ? 'Mark all read' : 'All read',
                       style: TextStyle(
-                        color: AppConstants.primaryColor,
+                        color: _hasUnreadNotifications
+                            ? AppConstants.primaryColor
+                            : AppConstants.textLight,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -71,7 +86,6 @@ class NotificationsScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Notification summary
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -142,7 +156,7 @@ class NotificationsScreen extends StatelessWidget {
                 message:
                 'Nearby hospital resource information has been updated.',
                 time: '10 min ago',
-                unread: true,
+                unread: _hasUnreadNotifications,
               ),
 
               const SizedBox(height: 10),
@@ -154,12 +168,12 @@ class NotificationsScreen extends StatelessWidget {
                 message:
                 'Blood availability information is now available for nearby hospitals.',
                 time: '1 hour ago',
-                unread: true,
+                unread: _hasUnreadNotifications,
               ),
 
               const SizedBox(height: 10),
 
-              _NotificationCard(
+              const _NotificationCard(
                 icon: Icons.location_on_rounded,
                 iconColor: AppConstants.blueColor,
                 title: 'Location updated',
@@ -182,7 +196,7 @@ class NotificationsScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              _NotificationCard(
+              const _NotificationCard(
                 icon: Icons.favorite_rounded,
                 iconColor: AppConstants.orangeColor,
                 title: 'Welcome to PranProhor',
@@ -194,7 +208,7 @@ class NotificationsScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              _NotificationCard(
+              const _NotificationCard(
                 icon: Icons.shield_outlined,
                 iconColor: AppConstants.primaryColor,
                 title: 'Emergency profile reminder',
@@ -206,7 +220,6 @@ class NotificationsScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // Future notification types
               const Text(
                 'What you may receive',
                 style: TextStyle(
@@ -255,7 +268,6 @@ class NotificationsScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Tagline
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -320,9 +332,7 @@ class _NotificationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: unread
-            ? AppConstants.softTeal
-            : Colors.white,
+        color: unread ? AppConstants.softTeal : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: unread
