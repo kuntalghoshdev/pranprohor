@@ -15,14 +15,6 @@ class LocationService {
     return Geolocator.requestPermission();
   }
 
-  static Future<Position> getCurrentPosition() async {
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
-    );
-  }
-
   static Future<bool> openAppSettings() async {
     return Geolocator.openAppSettings();
   }
@@ -31,11 +23,16 @@ class LocationService {
     return Geolocator.openLocationSettings();
   }
 
-  static Future<Position?> getLocation() async {
+  /// Gets a fresh, high-accuracy GPS position.
+  ///
+  /// We intentionally do not use the last known location here because
+  /// PranProhor needs the user's current position for emergency services,
+  /// nearby hospitals and saved-location detection.
+  static Future<Position> getCurrentPosition() async {
     final serviceEnabled = await isServiceEnabled();
 
     if (!serviceEnabled) {
-      return null;
+      throw const LocationServiceDisabledException();
     }
 
     LocationPermission permission = await checkPermission();
@@ -44,11 +41,51 @@ class LocationService {
       permission = await requestPermission();
     }
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      return null;
+    if (permission == LocationPermission.denied) {
+      throw const PermissionDeniedException(
+        'Location permission was denied.',
+      );
     }
 
-    return getCurrentPosition();
+    if (permission == LocationPermission.deniedForever) {
+      throw const PermissionDeniedException(
+        'Location permission is permanently denied.',
+      );
+    }
+
+    Position? bestPosition;
+
+    for (int attempt = 0; attempt < 3; attempt++) {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+
+      bestPosition = position;
+
+      if (position.accuracy <= 50) {
+        return position;
+      }
+
+      await Future<void>.delayed(
+        const Duration(milliseconds: 700),
+      );
+    }
+
+    if (bestPosition != null) {
+      return bestPosition;
+    }
+
+    throw const LocationServiceDisabledException();
+  }
+
+  static Future<Position?> getLocation() async {
+    try {
+      return await getCurrentPosition();
+    } catch (_) {
+      return null;
+    }
   }
 }

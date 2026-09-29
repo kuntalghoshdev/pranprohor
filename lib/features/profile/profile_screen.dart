@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../core/app_constants.dart';
 import '../auth/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../location/location_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -80,9 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
                 const SizedBox(height: 22),
-
                 Row(
                   children: [
                     Container(
@@ -126,45 +126,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 22),
-
                 _DetailRow(
                   icon: Icons.person_rounded,
                   label: 'Name',
                   value: name,
                   color: AppConstants.primaryColor,
                 ),
-
                 const SizedBox(height: 10),
-
                 _DetailRow(
                   icon: Icons.cake_outlined,
                   label: 'Age',
                   value: age,
                   color: AppConstants.orangeColor,
                 ),
-
                 const SizedBox(height: 10),
-
                 _DetailRow(
                   icon: Icons.wc_rounded,
                   label: 'Gender',
                   value: gender,
                   color: AppConstants.blueColor,
                 ),
-
                 const SizedBox(height: 10),
-
                 _DetailRow(
                   icon: Icons.bloodtype_outlined,
                   label: 'Blood Group',
                   value: bloodGroup,
                   color: AppConstants.emergencyColor,
                 ),
-
                 const SizedBox(height: 22),
-
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -176,6 +166,310 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: AppConstants.primaryColor,
                       foregroundColor: Colors.white,
                       elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveCurrentLocation() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    Navigator.of(context).pop();
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Getting your current location...'),
+      ),
+    );
+
+    try {
+      final position = await LocationService.getLocation();
+
+      if (position == null) {
+        if (!mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to get your location. Please enable location permission and GPS.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      String address = 'Current location';
+
+      try {
+        final geocoding = Geocoding();
+
+        final placemarks = await geocoding.placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+
+          final parts = <String>[
+            if ((place.name ?? '').trim().isNotEmpty)
+              place.name!.trim(),
+            if ((place.locality ?? '').trim().isNotEmpty)
+              place.locality!.trim(),
+            if ((place.administrativeArea ?? '').trim().isNotEmpty)
+              place.administrativeArea!.trim(),
+          ];
+
+          if (parts.isNotEmpty) {
+            address = parts.join(', ');
+          }
+        }
+      } catch (_) {
+        // Keep the fallback "Current location" if reverse geocoding fails.
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'savedLocation': {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'address': address,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      });
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _profileFuture = _loadProfile();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Saved location updated successfully.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to save your location. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showSavedLocation(Map<String, dynamic> profile) {
+    final savedLocation =
+    profile['savedLocation'] as Map<String, dynamic>?;
+
+    final address =
+        savedLocation?['address']?.toString().trim() ?? '';
+
+    final hasSavedLocation = address.isNotEmpty;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppConstants.backgroundColor,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppConstants.borderColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppConstants.orangeColor.withValues(
+                          alpha: 0.10,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.location_on_outlined,
+                        color: AppConstants.orangeColor,
+                        size: 25,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Saved Location',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppConstants.textDark,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Your preferred location for PranProhor',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppConstants.textLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(
+                      color: AppConstants.borderColor,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppConstants.orangeColor.withValues(
+                            alpha: 0.10,
+                          ),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          color: AppConstants.orangeColor,
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Current Saved Location',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppConstants.textLight,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              hasSavedLocation
+                                  ? address
+                                  : 'No location saved yet.',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppConstants.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _saveCurrentLocation,
+                    icon: const Icon(
+                      Icons.my_location_rounded,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      'Use Current Location',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppConstants.textDark,
+                      side: const BorderSide(
+                        color: AppConstants.borderColor,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -382,9 +676,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fit: BoxFit.contain,
                     ),
                   ),
-
                   const SizedBox(width: 12),
-
                   const Expanded(
                     child: Column(
                       crossAxisAlignment:
@@ -409,7 +701,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
-
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -473,9 +764,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppConstants.primaryColor,
                       ),
                     ),
-
                     const SizedBox(width: 16),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment:
@@ -491,9 +780,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const SizedBox(height: 5),
-
                           Text(
                             displayPhone,
                             style: const TextStyle(
@@ -501,9 +788,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               fontSize: 12,
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           const Row(
                             children: [
                               Icon(
@@ -562,7 +847,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle:
                 'Manage your preferred location',
                 color: AppConstants.orangeColor,
-                onTap: () {},
+                onTap: () {
+                  _showSavedLocation(profile);
+                },
               ),
 
               const SizedBox(height: 28),
@@ -774,9 +1061,7 @@ class _ProfileOption extends StatelessWidget {
                 size: 24,
               ),
             ),
-
             const SizedBox(width: 13),
-
             Expanded(
               child: Column(
                 crossAxisAlignment:
@@ -790,9 +1075,7 @@ class _ProfileOption extends StatelessWidget {
                       color: AppConstants.textDark,
                     ),
                   ),
-
                   const SizedBox(height: 3),
-
                   Text(
                     subtitle,
                     maxLines: 2,
@@ -806,9 +1089,7 @@ class _ProfileOption extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(width: 8),
-
             const Icon(
               Icons.chevron_right_rounded,
               color: AppConstants.textLight,
@@ -861,9 +1142,7 @@ class _DetailRow extends StatelessWidget {
               size: 22,
             ),
           ),
-
           const SizedBox(width: 13),
-
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -876,9 +1155,7 @@ class _DetailRow extends StatelessWidget {
                     color: AppConstants.textLight,
                   ),
                 ),
-
                 const SizedBox(height: 3),
-
                 Text(
                   value,
                   style: const TextStyle(
